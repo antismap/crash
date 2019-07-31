@@ -101,8 +101,8 @@ MEMORY_DRIVER_FILES=memory_driver/Makefile memory_driver/crash.c memory_driver/R
 
 EXTENSIONS=extensions
 EXTENSION_SOURCE_FILES=${EXTENSIONS}/Makefile ${EXTENSIONS}/echo.c ${EXTENSIONS}/dminfo.c \
-	${EXTENSIONS}/snap.c ${EXTENSIONS}/snap.mk ${EXTENSIONS}/trace.c \
-	${EXTENSIONS}/eppic.c ${EXTENSIONS}/eppic.mk
+	${EXTENSIONS}/snap.c ${EXTENSIONS}/snap.mk ${EXTENSIONS}/trace.c ${EXTENSIONS}/fsptrace.c \
+	${EXTENSIONS}/eppic.c ${EXTENSIONS}/eppic.mk ${EXTENSIONS}/appcore.c
 
 DAEMON_OBJECT_FILES=remote_daemon.o va_server.o va_server_v1.o \
 	lkcd_common.o lkcd_v1.o lkcd_v2_v3.o lkcd_v5.o lkcd_v7.o lkcd_v8.o \
