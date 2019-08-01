@@ -1045,6 +1045,8 @@ struct machdep_table {
         void (*get_irq_affinity)(int);
         void (*show_interrupts)(int, ulong *);
 	int (*is_page_ptr)(ulong, physaddr_t *);
+	/* Appcore add ons */
+	void (*cputime_to_timeval)(ulonglong, struct timeval*);
 };
 
 /*
@@ -2039,6 +2041,22 @@ struct offset_table {                    /* stash of commonly-used offsets */
 	long bpf_prog_aux_user;
 	long user_struct_uid;
 	long idr_cur;
+
+	/* appcore add ons */
+	long mm_struct_map_count;
+	long mm_struct_flags;
+	long mm_struct_saved_auxv;
+
+	long vm_area_struct_anon_vma;
+	long pid_level;
+
+	long sigset_t_sig;
+
+	long task_struct_real_cred;
+	long cred_gid;
+	long cred_uid;
+	/* end of appcore add ons */
+
 	long kmem_cache_memcg_params;
 	long memcg_cache_params___root_caches_node;
 	long memcg_cache_params_children;
@@ -2228,6 +2246,7 @@ struct size_table {         /* stash of commonly-used sizes */
 	long bpf_prog_aux;
 	long bpf_map;
 	long bpf_insn;
+	long cred;   /* add on for fsp2 */
 	long xarray;
 	long xa_node;
 };
