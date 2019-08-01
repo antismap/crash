@@ -1,7 +1,7 @@
 #include "defs.h"
 
-int _init(void);
-int _fini(void);
+int fsptrace_init(void);
+int fsptrace_fini(void);
 
 void cmd_fsptrace(void);
 char *help_fsptrace[];
@@ -31,13 +31,15 @@ static struct command_table_entry command_table[] = {
 	{ NULL }
 };
 
-int _init(void) /* Register the command set. */
+int __attribute__((constructor))
+fsptrace_init(void) /* Register the command set. */
 {
 	register_extension(command_table);
 	return 1;
 }
 
-int _fini(void)
+int __attribute__((destructor))
+fsptrace_fini(void)
 {
 	return 1;
 }
@@ -156,8 +158,8 @@ static int foreach_tracebuf( callback func, void* extra)
 	readmem(addr, KVADDR, trace_buffers,
 		buf_cnt * sizeof(uint32_t), "trace_buffers array",
 		FAULT_ON_ERROR);
-	swap_array(trace_buffers, sizeof(uint32_t), NEED_SWAP(),
-		   STRICT_SWAP, buf_cnt);
+	/* swap_array(trace_buffers, sizeof(uint32_t), NEED_SWAP(), */
+	/* 	   STRICT_SWAP, buf_cnt); */
 
 	for (i=0; i < buf_cnt; i++) {
 		if (!trace_buffers[i])
