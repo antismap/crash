@@ -2400,6 +2400,15 @@ DEF_LOADER(pointer_t);
 
 #endif /* NEED_ALIGNED_MEM_ACCESS */
 
+/* start for appcore */
+/* Target's LONG size: */
+#ifdef _64BIT_
+#define SIZEOF_LONG     8
+#else
+#define SIZEOF_LONG     4
+#endif
+/* end for appcore */
+
 struct node_table {
 	int node_id;
 	ulong pgdat;
