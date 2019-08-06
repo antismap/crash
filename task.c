@@ -276,6 +276,10 @@ task_init(void)
 		tt->flags |= THREAD_INFO;
 	}
 
+		MEMBER_OFFSET_INIT(task_struct_static_prio, "task_struct", "static_prio");
+        MEMBER_OFFSET_INIT(task_struct_rt_priority, "task_struct", "rt_priority");
+		MEMBER_OFFSET_INIT(task_struct_real_cred, "task_struct", "real_cred");   /* appcore */
+        MEMBER_OFFSET_INIT(task_struct_policy, "task_struct", "policy");
         MEMBER_OFFSET_INIT(task_struct_state, "task_struct", "state");
         MEMBER_OFFSET_INIT(task_struct_exit_state, "task_struct", "exit_state");
         MEMBER_OFFSET_INIT(task_struct_pid, "task_struct", "pid");
@@ -331,6 +335,8 @@ task_init(void)
 	}
 
 	MEMBER_OFFSET_INIT(pid_pid_chain, "pid", "pid_chain");
+	MEMBER_OFFSET_INIT(pid_level, "pid", "level");
+	
 
 	STRUCT_SIZE_INIT(task_struct, "task_struct");
 
@@ -346,6 +352,13 @@ task_init(void)
 				STRUCT_SIZE("task_struct"),
 				SIZE(task_struct));
 	}
+	
+	STRUCT_SIZE_INIT(cred, "cred");
+	if (VALID_STRUCT(cred)) {
+		MEMBER_OFFSET_INIT(cred_uid, "cred", "uid");
+		MEMBER_OFFSET_INIT(cred_gid, "cred", "gid");
+	}
+	
 
 	MEMBER_OFFSET_INIT(task_struct_sig, "task_struct", "sig");
 	MEMBER_OFFSET_INIT(task_struct_signal, "task_struct", "signal");
@@ -371,6 +384,9 @@ task_init(void)
 		MEMBER_OFFSET_INIT(sigpending_list, "sigpending", "list");
 	MEMBER_OFFSET_INIT(sigpending_signal, "sigpending", "signal");
 	MEMBER_SIZE_INIT(sigpending_signal, "sigpending", "signal");
+	
+	/*appcore */
+	MEMBER_OFFSET_INIT(sigset_t_sig, "sigset_t", "sig");
 
 	STRUCT_SIZE_INIT(sigqueue, "sigqueue");
        	STRUCT_SIZE_INIT(signal_queue, "signal_queue");
@@ -11118,4 +11134,16 @@ check_stack_end_magic:
 
 	if (!total)
 		fprintf(fp, "No stack overflows detected\n");
+}
+
+
+#define MAX_RT_PRIO 100
+int task_nice( struct task_context *tc )
+{
+	int prio = 0;
+	if( !readmem(tc->task + OFFSET(task_struct_static_prio), KVADDR,
+		     &prio, sizeof(int), "reading task_struct static_prio",
+		     RETURN_ON_ERROR))
+		return 0;
+	return prio - MAX_RT_PRIO - 20;
 }

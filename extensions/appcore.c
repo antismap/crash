@@ -347,7 +347,7 @@ static void do_appcore(struct task_context *tc, int file, int verbose,
 
 	/* get number of segments (VMAs) */
 	segs = ULONG(tt->mm_struct + OFFSET(mm_struct_map_count));
-	segs = EULONG(&segs);
+	segs = ULONG(&segs);
 
 	trace ("segs %d\n",segs);
 
@@ -405,7 +405,7 @@ static void do_appcore(struct task_context *tc, int file, int verbose,
 	pagemissingcounter = 0;
 	pagedumpedcounter = 0;
 	vmacounter = 0; pagebuffer = GETBUF(PAGESIZE());
-	for (vma = EULONG(&(ULONG(tt->mm_struct + OFFSET(mm_struct_mmap))));
+	for (vma = ULONG(&(ULONG(tt->mm_struct + OFFSET(mm_struct_mmap))));
 	     vma; vma = (ulong) vm_next) {
 		char *vma_buf;
 		unsigned long addr, missingstart;
@@ -415,12 +415,12 @@ static void do_appcore(struct task_context *tc, int file, int verbose,
 
 		/* write user pages of one VMA */
 		vma_buf = fill_vma_cache(vma);
-		vm_start = EULONG(&(ULONG(vma_buf + OFFSET(vm_area_struct_vm_start))));
-		vm_end = EULONG(&(ULONG(vma_buf + OFFSET(vm_area_struct_vm_end))));
+		vm_start = ULONG(&(ULONG(vma_buf + OFFSET(vm_area_struct_vm_start))));
+		vm_end = ULONG(&(ULONG(vma_buf + OFFSET(vm_area_struct_vm_end))));
 		vm_next = VOID_PTR(vma_buf + OFFSET(vm_area_struct_vm_next));
-		vm_next = EULONG(&vm_next);
-		vm_flags = EULONG(&(ULONG(vma_buf + OFFSET(vm_area_struct_vm_flags))));
-		mm_flags = EULONG(&(ULONG(tt->mm_struct + OFFSET(mm_struct_flags))));
+		vm_next = ULONG(&vm_next);
+		vm_flags = ULONG(&(ULONG(vma_buf + OFFSET(vm_area_struct_vm_flags))));
+		mm_flags = ULONG(&(ULONG(tt->mm_struct + OFFSET(mm_struct_flags))));
 
 		trace("vm_start 0x%08lx end 0x%08lx next %p vm_flags 0x%08lx mm_flags 0x%08lx\n",vm_start,vm_end,vm_next, vm_flags,mm_flags);
 
@@ -920,10 +920,10 @@ static ssize_t fill_prstatus_ppc(union elf_prstatus *in_prstatus,
 	prstatus->pr_pgrp = task_nr(tc->task, pidtype_PGID);
 	prstatus->pr_sid = task_nr(tc->task, pidtype_SID);
 
-	prstatus->pr_pid = EULONG(&(prstatus->pr_pid));
-	prstatus->pr_ppid = EULONG(&(prstatus->pr_ppid));
-	prstatus->pr_pgrp = EULONG(&(prstatus->pr_pgrp));
-	prstatus->pr_sid = EULONG(&(prstatus->pr_sid));
+	prstatus->pr_pid = ULONG(&(prstatus->pr_pid));
+	prstatus->pr_ppid = ULONG(&(prstatus->pr_ppid));
+	prstatus->pr_pgrp = ULONG(&(prstatus->pr_pgrp));
+	prstatus->pr_sid = ULONG(&(prstatus->pr_sid));
 
 	trace("prstatus->pr_pid %d\n",prstatus->pr_pid);
 	trace("prstatus->pr_ppid %d\n",prstatus->pr_ppid);
@@ -981,7 +981,7 @@ static ssize_t fill_auxv(struct appcore_context* ctx,
 
 	for( i = 0; 1; i++) {
 
-		vec[i] = EULONG(auxv + (i * SIZEOF_LONG));
+		vec[i] = ULONG(auxv + (i * SIZEOF_LONG));
 
 		if(!(i % 2) && (vec[i] == AT_NULL))
 			break;
@@ -1085,8 +1085,8 @@ static ssize_t fill_prpsinfo_ppc(union elf_prpsinfo *in_prpsinfo,
 	arg_start = ULONG(tt->mm_struct + OFFSET(mm_struct_arg_start));
 	arg_end = ULONG(tt->mm_struct + OFFSET(mm_struct_arg_end));
 
-	arg_start=EULONG(&arg_start);
-	arg_end=EULONG(&arg_end);
+	arg_start=ULONG(&arg_start);
+	arg_end=ULONG(&arg_end);
 
 	len = arg_end - arg_start;
 	if (len >= ELF_PRARGSZ)
@@ -1108,10 +1108,10 @@ static ssize_t fill_prpsinfo_ppc(union elf_prpsinfo *in_prpsinfo,
 	psinfo->pr_pgrp, task_nr(tc->task, pidtype_PGID);
 	psinfo->pr_sid, task_nr(tc->task, pidtype_SID);
 
-	psinfo->pr_pid=EULONG(&(psinfo->pr_pid));
-	psinfo->pr_ppid=EULONG(&(psinfo->pr_ppid));
-	psinfo->pr_pgrp=EULONG(&(psinfo->pr_pgrp));
-	psinfo->pr_sid=EULONG(&(psinfo->pr_sid));
+	psinfo->pr_pid=ULONG(&(psinfo->pr_pid));
+	psinfo->pr_ppid=ULONG(&(psinfo->pr_ppid));
+	psinfo->pr_pgrp=ULONG(&(psinfo->pr_pgrp));
+	psinfo->pr_sid=ULONG(&(psinfo->pr_sid));
 
 	trace("psinfo->pr_pid %d\n",psinfo->pr_pid);
 	trace("psinfo->pr_ppid %d\n",psinfo->pr_ppid);
@@ -1228,12 +1228,12 @@ static unsigned long vma_dump_size(char* vma_buf,
 	ulong vm_start = ULONG(vma_buf + OFFSET(vm_area_struct_vm_start));
 	ulong vm_end = ULONG(vma_buf + OFFSET(vm_area_struct_vm_end));
 
-	vm_flags=EULONG(&vm_flags);
-	anon_vma=EULONG(&(anon_vma));
-	vm_file=EULONG(&(vm_file));
-	vm_pgoff=EULONG(&(vm_pgoff));
-	vm_start=EULONG(&(vm_start));
-	vm_end=EULONG(&(vm_end));
+	vm_flags=ULONG(&vm_flags);
+	anon_vma=ULONG(&(anon_vma));
+	vm_file=ULONG(&(vm_file));
+	vm_pgoff=ULONG(&(vm_pgoff));
+	vm_start=ULONG(&(vm_start));
+	vm_end=ULONG(&(vm_end));
 
 	trace("mm_flags 0x%08lx\n",mm_flags);
 	trace("vm_flags 0x%08lx\n",vm_flags);
@@ -1347,18 +1347,18 @@ static ssize_t write_vma_phdr(struct appcore_context* ctx,
 
 	trace("write_vma_phdr\n");
 
-	for (vma = EULONG(&(ULONG(tt->mm_struct + OFFSET(mm_struct_mmap))));
+	for (vma = ULONG(&(ULONG(tt->mm_struct + OFFSET(mm_struct_mmap))));
 	     vma; vma = (ulong) vm_next)
 	{
 		vma_buf = fill_vma_cache(vma);
 
 		trace("vma in write_vma_phdr 0x%08lx\n",vma);
 
-		vm_start = EULONG(&(ULONG(vma_buf + OFFSET(vm_area_struct_vm_start))));
-		vm_end = EULONG(&(ULONG(vma_buf + OFFSET(vm_area_struct_vm_end))));
-		vm_next = EULONG(&(VOID_PTR(vma_buf + OFFSET(vm_area_struct_vm_next))));
-		vm_flags = EULONG(&(ULONG(vma_buf + OFFSET(vm_area_struct_vm_flags))));
-		mm_flags = EULONG(&(ULONG(tt->mm_struct + OFFSET(mm_struct_flags))));
+		vm_start = ULONG(&(ULONG(vma_buf + OFFSET(vm_area_struct_vm_start))));
+		vm_end = ULONG(&(ULONG(vma_buf + OFFSET(vm_area_struct_vm_end))));
+		vm_next = ULONG(&(VOID_PTR(vma_buf + OFFSET(vm_area_struct_vm_next))));
+		vm_flags = ULONG(&(ULONG(vma_buf + OFFSET(vm_area_struct_vm_flags))));
+		mm_flags = ULONG(&(ULONG(tt->mm_struct + OFFSET(mm_struct_flags))));
 		memsz = vm_end - vm_start;
 		filesz = (dumpall || vma_dump_size(vma_buf, mm_flags)) ? memsz : 0;
 
@@ -1426,17 +1426,17 @@ static int notesize(struct memelfnote *en)
 void swap_prsstatus(struct elf_prstatus_ppc * prsstatus)
 {
 	trace("swapping prsstatus\n");
-	prsstatus->pr_info.si_signo=ESHORT(&(prsstatus->pr_info.si_signo));
-	prsstatus->pr_info.si_errno=ESHORT(&(prsstatus->pr_info.si_errno));
-	prsstatus->pr_info.si_code=ESHORT(&(prsstatus->pr_info.si_code));
-	prsstatus->pr_cursig=ESHORT(&(prsstatus->pr_cursig));
-	prsstatus->pr_sigpend=EULONG(&(prsstatus->pr_sigpend));
-	prsstatus->pr_sighold=EULONG(&(prsstatus->pr_sighold));
+	prsstatus->pr_info.si_signo=SHORT(&(prsstatus->pr_info.si_signo));
+	prsstatus->pr_info.si_errno=SHORT(&(prsstatus->pr_info.si_errno));
+	prsstatus->pr_info.si_code=SHORT(&(prsstatus->pr_info.si_code));
+	prsstatus->pr_cursig=SHORT(&(prsstatus->pr_cursig));
+	prsstatus->pr_sigpend=ULONG(&(prsstatus->pr_sigpend));
+	prsstatus->pr_sighold=ULONG(&(prsstatus->pr_sighold));
 
-	prsstatus->pr_pid=EULONG(&(prsstatus->pr_pid));
-	prsstatus->pr_ppid=EULONG(&(prsstatus->pr_ppid));
-	prsstatus->pr_pgrp=EULONG(&(prsstatus->pr_pgrp));
-	prsstatus->pr_sid=EULONG(&(prsstatus->pr_sid));
+	prsstatus->pr_pid=ULONG(&(prsstatus->pr_pid));
+	prsstatus->pr_ppid=ULONG(&(prsstatus->pr_ppid));
+	prsstatus->pr_pgrp=ULONG(&(prsstatus->pr_pgrp));
+	prsstatus->pr_sid=ULONG(&(prsstatus->pr_sid));
 }
 
 

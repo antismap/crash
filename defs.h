@@ -541,6 +541,8 @@ struct program_context {
 #define QEMU_MEM_DUMP_COMPRESSED (0x10000ULL)
 #define SNAP        (0x20000ULL)
 #define EXCLUDED_VMEMMAP (0x40000ULL)
+#define ENDIAN_DIFF      (0x80000ULL)							/* Nathan */
+#define NEED_SWAP()  (pc->flags2 & ENDIAN_DIFF)					/* Nathan */
 #define is_excluded_vmemmap() (pc->flags2 & EXCLUDED_VMEMMAP)
 #define MEMSRC_LOCAL         (0x80000ULL)
 #define REDZONE             (0x100000ULL)
@@ -1246,6 +1248,8 @@ struct offset_table {                    /* stash of commonly-used offsets */
 	long task_struct_thread_info;
 	long task_struct_nsproxy;
 	long task_struct_rlim;
+	long task_struct_static_prio;
+	long task_struct_rt_priority;
 	long thread_info_task;
 	long thread_info_cpu;
 	long thread_info_previous_esp;
@@ -5544,6 +5548,7 @@ void sort_tgid_array(void);
 int sort_by_tgid(const void *, const void *);
 int in_irq_ctx(ulonglong, int, ulong);
 void check_stack_overflow(void);
+int task_nice( struct task_context * );
 
 /*
  *  extensions.c
