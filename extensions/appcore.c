@@ -14,7 +14,7 @@ static struct command_table_entry command_table[] = {
 	{ NULL }
 };
 
-#if defined(PPC)
+#if defined(ARM)
 int supported = TRUE;
 #else
 int supported = FALSE;
@@ -1548,6 +1548,14 @@ static void init_arch_context(struct appcore_context* ctx)
 
 	if( machine_type("PPC")) {
 		ctx->e_machine = EM_PPC;
+		ctx->ei_class = ELFCLASS32;
+		/* FIXME: Move this to the ppc stuff. */
+		ctx->thread_notes = 1;
+		ctx->fill_prstatus = fill_prstatus_ppc;
+		ctx->fill_prpsinfo = fill_prpsinfo_ppc;
+	}
+	else if( machine_type("ARM")) {
+		ctx->e_machine = EM_ARM;
 		ctx->ei_class = ELFCLASS32;
 		/* FIXME: Move this to the ppc stuff. */
 		ctx->thread_notes = 1;
