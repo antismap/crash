@@ -957,6 +957,83 @@ static ssize_t fill_prstatus_ppc(union elf_prstatus *in_prstatus,
 	return sizeof(struct elf_prstatus_ppc);
 }
 
+/**
+ * Initialize the ELF prstatus note for ARM.
+ *
+ * @param prstatus Pointer to a reserved prstatus structure (output).
+ * @param tc       Crash's task_context for the target process.
+ *
+ * @return Size of the prstatus note.
+ */
+static ssize_t fill_prstatus_arm(union elf_prstatus *in_prstatus,
+				 struct task_context *tc)
+{
+	int pidtype_PGID = 1, pidtype_SID = 2;
+	struct timeval timeval;
+
+	struct elf_prstatus_arm* prstatus = &in_prstatus->arm;
+	memset(prstatus, 0, sizeof(struct elf_prstatus_arm));
+
+	/* copy the registers from kernel stack to pt_regs structure */
+	trace("readmem fill_prstatus 0x%08lx\n",GET_STACKTOP(tc->task) - SIZE(pt_regs));
+	readmem(GET_STACKTOP(tc->task) - SIZE(pt_regs), KVADDR,
+		&prstatus->pr_reg, SIZE(pt_regs),
+		"reading pt_regs from kernel stack", RETURN_ON_ERROR);
+
+	/* prstatus->pr_sigpend = [task_struct]->pending.signal.sig[0] */
+	prstatus->pr_sigpend =
+		ULONG(tt->task_struct + OFFSET(task_struct_pending) +
+		OFFSET(sigpending_signal) + OFFSET(sigset_t_sig));
+
+	/* prstatus->pr_sighold = [task_struct]->blocked.sig[0] */
+	prstatus->pr_sighold = ULONG(tt->task_struct + \
+								 OFFSET(task_struct_blocked));
+
+	/* various process IDs */
+	prstatus->pr_pid = tc->pid;
+	prstatus->pr_ppid = task_to_context(tc->ptask)->pid;
+	prstatus->pr_pgrp = task_nr(tc->task, pidtype_PGID);
+	prstatus->pr_sid = task_nr(tc->task, pidtype_SID);
+
+	prstatus->pr_pid = ULONG(&(prstatus->pr_pid));
+	prstatus->pr_ppid = ULONG(&(prstatus->pr_ppid));
+	prstatus->pr_pgrp = ULONG(&(prstatus->pr_pgrp));
+	prstatus->pr_sid = ULONG(&(prstatus->pr_sid));
+
+	trace("prstatus->pr_pid %d\n",prstatus->pr_pid);
+	trace("prstatus->pr_ppid %d\n",prstatus->pr_ppid);
+	trace("prstatus->pr_pgrp %d\n",prstatus->pr_pgrp);
+	trace("prstatus->pr_sid %d\n",prstatus->pr_sid);
+
+#if 0
+	/* User Time */
+	machdep->cputime_to_timeval( ULONGLONG(tt->task_struct +
+				     MEMBER_OFFSET("task_struct", "utime")),
+				     &timeval);
+	save_timeval_32(&prstatus->pr_utime, &timeval);
+
+	/* System Time */
+	machdep->cputime_to_timeval( ULONGLONG(tt->task_struct +
+				     MEMBER_OFFSET("task_struct", "stime")),
+				     &timeval);
+	save_timeval_32(&prstatus->pr_stime, &timeval);
+
+	/* Children User Time */
+	machdep->cputime_to_timeval( ULONGLONG(tt->task_struct +
+				     MEMBER_OFFSET("task_struct", "cutime")),
+				     &timeval);
+	save_timeval_32(&prstatus->pr_cutime, &timeval);
+
+	/* Children System Time */
+	machdep->cputime_to_timeval( ULONGLONG(tt->task_struct +
+				     MEMBER_OFFSET("task_struct", "cstime")),
+				     &timeval);
+	save_timeval_32(&prstatus->pr_cstime, &timeval);
+#endif
+
+	return sizeof(struct elf_prstatus_arm);
+}
+
 /******************************************************************************
  *                         Elf OS Aux Info Note                               *
  *****************************************************************************/
@@ -1134,6 +1211,7 @@ static ssize_t fill_prpsinfo_ppc(union elf_prpsinfo *in_prpsinfo,
 		OFFSET(task_struct_comm), sizeof(psinfo->pr_fname));
 	return sizeof(struct elf_prpsinfo_32);
 }
+
 
 /*****************************************************************************/
 
@@ -1557,9 +1635,9 @@ static void init_arch_context(struct appcore_context* ctx)
 	else if( machine_type("ARM")) {
 		ctx->e_machine = EM_ARM;
 		ctx->ei_class = ELFCLASS32;
-		/* FIXME: Move this to the ppc stuff. */
+
 		ctx->thread_notes = 1;
-		ctx->fill_prstatus = fill_prstatus_ppc;
+		ctx->fill_prstatus = fill_prstatus_arm;
 		ctx->fill_prpsinfo = fill_prpsinfo_ppc;
 	}
 

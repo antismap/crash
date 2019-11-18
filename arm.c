@@ -55,6 +55,8 @@ static void arm_display_machine_stats(void);
 static int arm_get_smp_cpus(void);
 static void arm_init_machspec(void);
 
+//static void arm_cputime_to_timeval(ulonglong, struct timeval*);
+
 static struct line_number_hook arm_line_number_hooks[];
 static struct machine_specific arm_machine_specific;
 
@@ -264,6 +266,7 @@ arm_init(int when)
 		machdep->dump_irq = generic_dump_irq;
 		machdep->show_interrupts = generic_show_interrupts;
 		machdep->get_irq_affinity = generic_get_irq_affinity;
+		//machdep->cputime_to_timeval = arm_cputime_to_timeval;
 
 		arm_init_machspec();
 		break;
