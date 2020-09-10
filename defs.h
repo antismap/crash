@@ -541,6 +541,8 @@ struct program_context {
 #define QEMU_MEM_DUMP_COMPRESSED (0x10000ULL)
 #define SNAP        (0x20000ULL)
 #define EXCLUDED_VMEMMAP (0x40000ULL)
+#define ENDIAN_DIFF      (0x80000ULL)							/* Nathan */
+#define NEED_SWAP()  (pc->flags2 & ENDIAN_DIFF)					/* Nathan */
 #define is_excluded_vmemmap() (pc->flags2 & EXCLUDED_VMEMMAP)
 #define MEMSRC_LOCAL         (0x80000ULL)
 #define REDZONE             (0x100000ULL)
@@ -1049,6 +1051,8 @@ struct machdep_table {
         void (*get_irq_affinity)(int);
         void (*show_interrupts)(int, ulong *);
 	int (*is_page_ptr)(ulong, physaddr_t *);
+/* Appcore add ons */
+	void (*cputime_to_timeval)(ulonglong, struct timeval*);
 };
 
 /*
@@ -1248,6 +1252,8 @@ struct offset_table {                    /* stash of commonly-used offsets */
 	long task_struct_thread_info;
 	long task_struct_nsproxy;
 	long task_struct_rlim;
+	long task_struct_static_prio;
+	long task_struct_rt_priority;
 	long thread_info_task;
 	long thread_info_cpu;
 	long thread_info_previous_esp;
@@ -2043,6 +2049,20 @@ struct offset_table {                    /* stash of commonly-used offsets */
 	long bpf_prog_aux_user;
 	long user_struct_uid;
 	long idr_cur;
+	/* appcore add ons */
+	long mm_struct_map_count;
+	long mm_struct_flags;
+	long mm_struct_saved_auxv;
+
+	long vm_area_struct_anon_vma;
+	long pid_level;
+
+	long sigset_t_sig;
+
+	long task_struct_real_cred;
+	long cred_gid;
+	long cred_uid;
+	/* end of appcore add ons */
 	long kmem_cache_memcg_params;
 	long memcg_cache_params___root_caches_node;
 	long memcg_cache_params_children;
@@ -2255,6 +2275,7 @@ struct size_table {         /* stash of commonly-used sizes */
 	long bpf_prog_aux;
 	long bpf_map;
 	long bpf_insn;
+	long cred;   /* add on for fsp2 */
 	long xarray;
 	long xa_node;
 	long zram_table_entry;
@@ -2412,6 +2433,16 @@ DEF_LOADER(pointer_t);
 #define VOID_PTR(ADDR)  *((void **)((char *)(ADDR)))
 
 #endif /* NEED_ALIGNED_MEM_ACCESS */
+
+/* start for appcore */
+/* Target's LONG size: */
+#ifdef _64BIT_
+#define SIZEOF_LONG     8
+#else
+#define SIZEOF_LONG     4
+#endif
+/* end for appcore */
+
 
 struct node_table {
 	int node_id;
@@ -5554,6 +5585,7 @@ void sort_tgid_array(void);
 int sort_by_tgid(const void *, const void *);
 int in_irq_ctx(ulonglong, int, ulong);
 void check_stack_overflow(void);
+int task_nice( struct task_context * );
 
 /*
  *  extensions.c

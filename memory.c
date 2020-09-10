@@ -359,6 +359,8 @@ vm_init(void)
 
         MEMBER_OFFSET_INIT(task_struct_mm, "task_struct", "mm");
         MEMBER_OFFSET_INIT(mm_struct_mmap, "mm_struct", "mmap");
+		MEMBER_OFFSET_INIT(mm_struct_arg_start, "mm_struct", "arg_start");
+		MEMBER_OFFSET_INIT(mm_struct_arg_end, "mm_struct", "arg_end");
         MEMBER_OFFSET_INIT(mm_struct_pgd, "mm_struct", "pgd");
 	MEMBER_OFFSET_INIT(mm_struct_rss, "mm_struct", "rss");
 	if (!VALID_MEMBER(mm_struct_rss))
@@ -504,6 +506,13 @@ vm_init(void)
 	MEMBER_OFFSET_INIT(gendisk_major, "gendisk", "major");
 	MEMBER_OFFSET_INIT(gendisk_fops, "gendisk", "fops");
 	MEMBER_OFFSET_INIT(gendisk_disk_name, "gendisk", "disk_name");
+/* for appcore usage */
+	MEMBER_OFFSET_INIT(mm_struct_map_count, "mm_struct", "map_count");
+	MEMBER_OFFSET_INIT(mm_struct_flags, "mm_struct", "flags");
+	MEMBER_OFFSET_INIT(mm_struct_saved_auxv, "mm_struct", "saved_auxv");
+
+	MEMBER_OFFSET_INIT(vm_area_struct_anon_vma,"vm_area_struct","anon_vma");
+
 	MEMBER_OFFSET_INIT(gendisk_private_data, "gendisk", "private_data");
 
 	STRUCT_SIZE_INIT(block_device, "block_device");
