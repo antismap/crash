@@ -5593,7 +5593,7 @@ void sort_tgid_array(void);
 int sort_by_tgid(const void *, const void *);
 int in_irq_ctx(ulonglong, int, ulong);
 void check_stack_overflow(void);
-int task_nice( struct task_context * );
+//int task_nice( struct task_context * );
 
 /*
  *  extensions.c
