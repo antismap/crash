@@ -11281,6 +11281,7 @@ check_stack_end_magic:
 		fprintf(fp, "No stack overflows detected\n");
 }
 
+/*
 #define MAX_RT_PRIO 100
 int task_nice( struct task_context *tc )
 {
@@ -11291,3 +11292,4 @@ int task_nice( struct task_context *tc )
 		return 0;
 	return prio - MAX_RT_PRIO - 20;
 }
+*/
