@@ -312,6 +312,7 @@ fill_psinfo_note(struct elf_note_info *info, struct task_context *tc,
         /* first copy the parameters from user space */
 	BZERO(psinfo, sizeof(struct elf_prpsinfo));
 
+	/*
 	mm_cache = fill_mm_struct(task_mm(tc->task, FALSE));
 
 	arg_start = ULONG(mm_cache + GCORE_OFFSET(mm_struct_arg_start));
@@ -330,6 +331,7 @@ fill_psinfo_note(struct elf_note_info *info, struct task_context *tc,
                 if (psinfo->pr_psargs[i] == 0)
                         psinfo->pr_psargs[i] = ' ';
         psinfo->pr_psargs[len] = 0;
+	*/
 
 	readmem(tc->task + GCORE_OFFSET(task_struct_real_parent), KVADDR,
 		&parent, sizeof(parent), "fill_psinfo: real_parent",
@@ -386,6 +388,7 @@ compat_fill_psinfo_note(struct elf_note_info *info,
         /* first copy the parameters from user space */
 	BZERO(psinfo, sizeof(struct elf_prpsinfo));
 
+	/*
 	mm_cache = fill_mm_struct(task_mm(tc->task, FALSE));
 
 	arg_start = ULONG(mm_cache + GCORE_OFFSET(mm_struct_arg_start));
@@ -404,6 +407,7 @@ compat_fill_psinfo_note(struct elf_note_info *info,
                 if (psinfo->pr_psargs[i] == 0)
                         psinfo->pr_psargs[i] = ' ';
         psinfo->pr_psargs[len] = 0;
+	*/
 
 	readmem(tc->task + GCORE_OFFSET(task_struct_real_parent), KVADDR,
 		&parent, sizeof(parent), "fill_psinfo: real_parent",
