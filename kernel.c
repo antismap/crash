@@ -225,22 +225,26 @@ kernel_init()
 	get_xtime(&kt->date);
 	if (CRASHDEBUG(1))
 		fprintf(fp, "xtime timespec.tv_sec: %lx: %s\n", 
-			kt->date.tv_sec, strip_linefeeds(ctime(&kt->date.tv_sec)));
+			kt->date.tv_sec, ctime_tz(&kt->date.tv_sec));
 	if (kt->flags2 & GET_TIMESTAMP) {
-		fprintf(fp, "%s\n\n", 
-			strip_linefeeds(ctime(&kt->date.tv_sec)));
+		fprintf(fp, "%s\n\n", ctime_tz(&kt->date.tv_sec));
 		clean_exit(0);
 	}
-	
+
+	MEMBER_OFFSET_INIT(uts_namespace_name, "uts_namespace", "name");
 	if (symbol_exists("system_utsname"))
         	readmem(symbol_value("system_utsname"), KVADDR, &kt->utsname,
                 	sizeof(struct new_utsname), "system_utsname", 
 			RETURN_ON_ERROR);
-	else if (symbol_exists("init_uts_ns"))
-		readmem(symbol_value("init_uts_ns") + sizeof(int),
-			KVADDR,  &kt->utsname, sizeof(struct new_utsname), 
+	else if (symbol_exists("init_uts_ns")) {
+		long offset = sizeof(int);
+		if (VALID_MEMBER(uts_namespace_name))
+			offset = OFFSET(uts_namespace_name);
+
+		readmem(symbol_value("init_uts_ns") + offset,
+			KVADDR,  &kt->utsname, sizeof(struct new_utsname),
 			"init_uts_ns", RETURN_ON_ERROR);
-	else
+	} else
 		error(INFO, "cannot access utsname information\n\n");
 
 	if (CRASHDEBUG(1)) {
@@ -548,6 +552,12 @@ kernel_init()
 		MEMBER_OFFSET_INIT(irq_data_chip, "irq_data", "chip");
 		MEMBER_OFFSET_INIT(irq_data_affinity, "irq_data", "affinity");
 		MEMBER_OFFSET_INIT(irq_desc_irq_data, "irq_desc", "irq_data");
+	}
+
+	STRUCT_SIZE_INIT(irq_common_data, "irq_common_data");
+	if (VALID_STRUCT(irq_common_data)) {
+		MEMBER_OFFSET_INIT(irq_common_data_affinity, "irq_common_data", "affinity");
+		MEMBER_OFFSET_INIT(irq_desc_irq_common_data, "irq_desc", "irq_common_data");
 	}
 
         STRUCT_SIZE_INIT(irq_cpustat_t, "irq_cpustat_t");
@@ -5234,7 +5244,7 @@ dump_log_entry(char *logptr, int msg_flags)
 		rem = (ulonglong)ts_nsec % (ulonglong)1000000000;
 		if (msg_flags & SHOW_LOG_CTIME) {
 			time_t t = kt->boot_date.tv_sec + nanos;
-			sprintf(buf, "[%s] ", strip_linefeeds(ctime(&t)));
+			sprintf(buf, "[%s] ", ctime_tz(&t));
 		}
 		else
 			sprintf(buf, "[%5lld.%06ld] ", nanos, rem/1000);
@@ -5609,8 +5619,7 @@ display_sys_stats(void)
 
 	if (ACTIVE())
 		get_xtime(&kt->date);
-        fprintf(fp, "        DATE: %s\n", 
-		strip_linefeeds(ctime(&kt->date.tv_sec))); 
+        fprintf(fp, "        DATE: %s\n", ctime_tz(&kt->date.tv_sec));
         fprintf(fp, "      UPTIME: %s\n", get_uptime(buf, NULL)); 
         fprintf(fp, "LOAD AVERAGE: %s\n", get_loadavg(buf)); 
 	fprintf(fp, "       TASKS: %ld\n", RUNNING_TASKS());
@@ -6101,10 +6110,8 @@ dump_kernel_table(int verbose)
 		kt->source_tree : "(not used)");
 	if (!(pc->flags & KERNEL_DEBUG_QUERY) && ACTIVE()) 
 		get_xtime(&kt->date);
-        fprintf(fp, "          date: %s\n",
-                strip_linefeeds(ctime(&kt->date.tv_sec)));
-        fprintf(fp, "    boot_ date: %s\n",
-                strip_linefeeds(ctime(&kt->boot_date.tv_sec)));
+        fprintf(fp, "          date: %s\n", ctime_tz(&kt->date.tv_sec));
+        fprintf(fp, "     boot_date: %s\n", ctime_tz(&kt->boot_date.tv_sec));
         fprintf(fp, "  proc_version: %s\n", strip_linefeeds(kt->proc_version));
         fprintf(fp, "   new_utsname: \n");
         fprintf(fp, "      .sysname: %s\n", uts->sysname);
@@ -6397,10 +6404,9 @@ cmd_irq(void)
 			if (!machdep->get_irq_affinity)
 				option_not_supported(c);
 
-			if (VALID_STRUCT(irq_data)) {
-				if (INVALID_MEMBER(irq_data_affinity))
-					option_not_supported(c);
-			} else if (INVALID_MEMBER(irq_desc_t_affinity))
+			if (INVALID_MEMBER(irq_data_affinity) &&
+			    INVALID_MEMBER(irq_common_data_affinity) &&
+			    INVALID_MEMBER(irq_desc_t_affinity))
 				option_not_supported(c);
 
 			if ((nr_irqs = machdep->nr_irqs) == 0)
@@ -7162,7 +7168,10 @@ generic_get_irq_affinity(int irq)
 		len = DIV_ROUND_UP(kt->cpus, BITS_PER_LONG) * sizeof(ulong);
 
 	affinity = (ulong *)GETBUF(len);
-	if (VALID_STRUCT(irq_data))
+	if (VALID_MEMBER(irq_common_data_affinity))
+		tmp_addr = irq_desc_addr + OFFSET(irq_desc_irq_common_data)
+				+ OFFSET(irq_common_data_affinity);
+	else if (VALID_MEMBER(irq_data_affinity))
 		tmp_addr = irq_desc_addr + \
 			   OFFSET(irq_data_affinity);
 	else

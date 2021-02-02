@@ -634,8 +634,11 @@ kaslr_init(void)
 		}
 	}
 
-	if (SADUMP_DUMPFILE() || VMSS_DUMPFILE())
+	if (SADUMP_DUMPFILE() || QEMU_MEM_DUMP_NO_VMCOREINFO() || VMSS_DUMPFILE()) {
+		/* Need for kaslr_offset and phys_base */
 		kt->flags2 |= KASLR_CHECK;
+		st->_stext_vmlinux = UNINITIALIZED;
+	}
 }
 
 /*
@@ -3868,7 +3871,8 @@ is_shared_object(char *file)
 			break;
 
 		case EM_X86_64:
-			if (machine_type("X86_64") || machine_type("ARM64")) 
+			if (machine_type("X86_64") || machine_type("ARM64") ||
+			    machine_type("PPC64"))
 				return TRUE;
 			break;
 
@@ -9326,8 +9330,12 @@ dump_offset_table(char *spec, ulong makestruct)
 		OFFSET(irq_data_chip));
 	fprintf(fp, "             irq_data_affinity: %ld\n",
 		OFFSET(irq_data_affinity));
+	fprintf(fp, "      irq_common_data_affinity: %ld\n",
+		OFFSET(irq_common_data_affinity));
 	fprintf(fp, "             irq_desc_irq_data: %ld\n",
 		OFFSET(irq_desc_irq_data));
+	fprintf(fp, "      irq_desc_irq_common_data: %ld\n",
+		OFFSET(irq_desc_irq_common_data));
 	fprintf(fp, "              kernel_stat_irqs: %ld\n",
 		OFFSET(kernel_stat_irqs));
 
@@ -9468,6 +9476,8 @@ dump_offset_table(char *spec, ulong makestruct)
 		OFFSET(inode_i_fop)); 
 	fprintf(fp, "               inode_i_mapping: %ld\n",
 		OFFSET(inode_i_mapping));
+	fprintf(fp, "               inode_i_sb_list: %ld\n",
+		OFFSET(inode_i_sb_list));
 
         fprintf(fp, "             vfsmount_mnt_next: %ld\n", 
 		OFFSET(vfsmount_mnt_next));
@@ -9504,6 +9514,8 @@ dump_offset_table(char *spec, ulong makestruct)
 		OFFSET(super_block_s_type));
         fprintf(fp, "           super_block_s_files: %ld\n", 
 		OFFSET(super_block_s_files));
+	fprintf(fp, "          super_block_s_inodes: %ld\n",
+		OFFSET(super_block_s_inodes));
 
 	fprintf(fp, "               nlm_file_f_file: %ld\n",
 		OFFSET(nlm_file_f_file));
@@ -10577,6 +10589,9 @@ dump_offset_table(char *spec, ulong makestruct)
 	fprintf(fp, "                 xa_node_shift: %ld\n",
 		OFFSET(xa_node_shift));
 
+	fprintf(fp, "            uts_namespace_name: %ld\n",
+		OFFSET(uts_namespace_name));
+
 	fprintf(fp, "\n                    size_table:\n");
 	fprintf(fp, "                          page: %ld\n", SIZE(page));
 	fprintf(fp, "                    page_flags: %ld\n", SIZE(page_flags));
@@ -10679,6 +10694,7 @@ dump_offset_table(char *spec, ulong makestruct)
 	fprintf(fp, "                      runqueue: %ld\n", SIZE(runqueue));
 	fprintf(fp, "                    irq_desc_t: %ld\n", SIZE(irq_desc_t));
 	fprintf(fp, "                      irq_data: %ld\n", SIZE(irq_data));
+	fprintf(fp, "               irq_common_data: %ld\n", SIZE(irq_common_data));
 	fprintf(fp, "                    task_union: %ld\n", SIZE(task_union));
 	fprintf(fp, "                  thread_union: %ld\n", SIZE(thread_union));
 	fprintf(fp, "                    prio_array: %ld\n", SIZE(prio_array));
@@ -12698,9 +12714,11 @@ numeric_forward(const void *P_x, const void *P_y)
 
 	if (SADUMP_DUMPFILE() || QEMU_MEM_DUMP_NO_VMCOREINFO() || VMSS_DUMPFILE()) {
 		/* Need for kaslr_offset and phys_base */
-		if (STREQ(x->name, "divide_error"))
+		if (STREQ(x->name, "divide_error") ||
+		    STREQ(x->name, "asm_exc_divide_error"))
 			st->divide_error_vmlinux = valueof(x);
-		else if (STREQ(y->name, "divide_error"))
+		else if (STREQ(y->name, "divide_error") ||
+			 STREQ(y->name, "asm_exc_divide_error"))
 			st->divide_error_vmlinux = valueof(y);
 
 		if (STREQ(x->name, "idt_table"))
